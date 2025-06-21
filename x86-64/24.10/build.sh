@@ -49,9 +49,6 @@ if [ "$INCLUDE_DOCKER" = "yes" ]; then
     echo "Adding package: luci-i18n-dockerman-zh-cn"
 fi
 
-# 确保 .config（即 imm.config）生效
-echo "Running make defconfig..."
-make defconfig
 
 # 构建镜像
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Building image with the following packages:"
