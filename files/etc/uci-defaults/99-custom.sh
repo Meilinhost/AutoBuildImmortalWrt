@@ -34,39 +34,48 @@ done
 # 删除多余空格
 ifnames=$(echo "$ifnames" | awk '{$1=$1};1')
 
-# 网络设置
-if [ "$count" -eq 1 ]; then
-   # 单网口设备 类似于NAS模式 动态获取ip模式 具体ip地址取决于上一级路由器给它分配的ip 也方便后续你使用web页面设置旁路由
-   # 单网口设备 不支持修改ip 不要在此处修改ip 
-   uci set network.lan.proto='dhcp'
-elif [ "$count" -gt 1 ]; then
-   # 提取第一个接口作为WAN
-   wan_ifname=$(echo "$ifnames" | awk '{print $1}')
-   # 剩余接口保留给LAN
-   lan_ifnames=$(echo "$ifnames" | cut -d ' ' -f2-)
-   # 设置WAN接口基础配置
+# 获取网卡列表
+ifnames=$(ls /sys/class/net | grep -E '^eth[0-9]+$' | sort)
+
+# 判断网口数量
+count=$(echo "$ifnames" | wc -l)
+
+# 仅继续处理多网口设备
+if [ "$count" -ge 2 ]; then
+   lan_ifname=$(echo "$ifnames" | awk 'NR==1')  # 第一个接口为 LAN（eth0）
+   wan_ifname=$(echo "$ifnames" | awk 'NR==2')  # 第二个接口为 WAN（eth1）
+
+   # 设置LAN
+   uci set network.lan=interface
+   uci set network.lan.device="$lan_ifname"
+   uci set network.lan.proto='static'
+   uci set network.lan.ipaddr='192.168.1.1'
+   uci set network.lan.netmask='255.255.255.0'
+
+   # 设置WAN
    uci set network.wan=interface
-   # 提取第一个接口作为WAN
    uci set network.wan.device="$wan_ifname"
-   # WAN接口默认DHCP
    uci set network.wan.proto='dhcp'
-   # 设置WAN6绑定网口eth0
+
+   # 设置WAN6
    uci set network.wan6=interface
    uci set network.wan6.device="$wan_ifname"
-   # 更新LAN接口成员
-   # 查找对应设备的section名称
+   uci set network.wan6.proto='dhcpv6'
+
+   # 绑定LAN网口到 br-lan 的 bridge ports
    section=$(uci show network | awk -F '[.=]' '/\.@?device\[\d+\]\.name=.br-lan.$/ {print $2; exit}')
-   if [ -z "$section" ]; then
-      echo "error：cannot find device 'br-lan'." >> $LOGFILE
-   else
-      # 删除原来的ports列表
+   if [ -n "$section" ]; then
       uci -q delete "network.$section.ports"
-      # 添加新的ports列表
-      for port in $lan_ifnames; do
-         uci add_list "network.$section.ports"="$port"
-      done
-      echo "ports of device 'br-lan' are update." >> $LOGFILE
+      uci add_list "network.$section.ports"="$lan_ifname"
+      echo "LAN port $lan_ifname 已绑定到 br-lan" >> $LOGFILE
+   else
+      echo "❌ 找不到 br-lan 接口 section" >> $LOGFILE
    fi
+
+   uci commit network
+   echo "✅ 接口已重新配置为 LAN=$lan_ifname, WAN=$wan_ifname" >> $LOGFILE
+fi
+
    # LAN口设置静态IP
    uci set network.lan.proto='static'
    # 多网口设备 支持修改为别的ip地址,别的地址应该是网关地址，形如192.168.xx.1 项目说明里都强调过。
