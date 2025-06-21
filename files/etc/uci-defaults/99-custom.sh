@@ -71,7 +71,6 @@ if [ "$count" -ge 2 ]; then
    else
       echo "❌ 找不到 br-lan 接口 section" >> $LOGFILE
    fi
-
    uci commit network
    echo "✅ 接口已重新配置为 LAN=$lan_ifname, WAN=$wan_ifname" >> $LOGFILE
 fi
