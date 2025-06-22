@@ -3,6 +3,14 @@
 # Log file for debugging
 LOGFILE="/tmp/uci-defaults-log.txt"
 echo "Starting 99-custom.sh at $(date)" >> $LOGFILE
+# 读取当前WAN协议
+current_wan_proto=$(uci get network.wan.proto 2>/dev/null || echo "none")
+echo "Current WAN proto: $current_wan_proto" >> $LOGFILE
+
+# 如果WAN已经是pppoe，就不重复配置
+if [ "$current_wan_proto" = "pppoe" ]; then
+  echo "WAN is already PPPoE, skipping WAN config" >> $LOGFILE
+
 # 追加写入并加载 TCP 内核参数
 cat <<EOF >> /etc/sysctl.conf
 # 自定义 TCP 参数（接收/发送窗口最大值，动态窗口缩放，BBR）
