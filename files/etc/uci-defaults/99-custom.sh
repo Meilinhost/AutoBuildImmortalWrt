@@ -20,7 +20,7 @@ net.ipv4.tcp_rmem = 4096 87380 67108864
 net.ipv4.tcp_wmem = 4096 65536 67108864
 net.ipv4.tcp_window_scaling = 1
 net.ipv4.tcp_moderate_rcvbuf = 1
-net.core.default_qdisc = fq
+net.core.default_qdisc = fq_codel
 net.ipv4.tcp_congestion_control = cubic
 EOF
 sysctl -p /etc/sysctl.conf
