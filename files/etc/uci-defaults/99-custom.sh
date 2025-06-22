@@ -3,6 +3,21 @@
 # Log file for debugging
 LOGFILE="/tmp/uci-defaults-log.txt"
 echo "Starting 99-custom.sh at $(date)" >> $LOGFILE
+# 追加写入并加载 TCP 内核参数
+cat <<EOF >> /etc/sysctl.conf
+# 自定义 TCP 参数（接收/发送窗口最大值，动态窗口缩放，BBR）
+net.core.rmem_max = 67108864
+net.core.wmem_max = 67108864
+net.ipv4.tcp_rmem = 4096 87380 67108864
+net.ipv4.tcp_wmem = 4096 65536 67108864
+net.ipv4.tcp_window_scaling = 1
+net.ipv4.tcp_moderate_rcvbuf = 1
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = cubic
+EOF
+sysctl -p /etc/sysctl.conf
+echo "TCP sysctl parameters loaded at $(date)" >> $LOGFILE
+
 # 设置默认防火墙规则，方便虚拟机首次访问 WebUI
 uci set firewall.@zone[1].input='ACCEPT'
 
