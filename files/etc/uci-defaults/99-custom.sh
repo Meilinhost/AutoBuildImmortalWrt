@@ -151,5 +151,7 @@ uci commit
 FILE_PATH="/etc/openwrt_release"
 NEW_DESCRIPTION="Compiled by wukongdaily"
 sed -i "s/DISTRIB_DESCRIPTION='[^']*'/DISTRIB_DESCRIPTION='$NEW_DESCRIPTION'/" "$FILE_PATH"
+# 脚本执行完成后重命名自己，防止重复执行
+mv /etc/uci-defaults/99-custom.sh /etc/uci-defaults/99-custom.sh.bak
 
 exit 0
