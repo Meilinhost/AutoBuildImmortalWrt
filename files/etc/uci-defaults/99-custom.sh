@@ -64,7 +64,7 @@ if [ "$count" -ge 2 ]; then
    uci set network.lan=interface
    uci set network.lan.device="$lan_ifname"
    uci set network.lan.proto='static'
-   uci set network.lan.ipaddr='192.168.1.1'
+   uci set network.lan.ipaddr='192.168.100.1'
    uci set network.lan.netmask='255.255.255.0'
 
    # 设置WAN
@@ -151,7 +151,10 @@ uci commit
 FILE_PATH="/etc/openwrt_release"
 NEW_DESCRIPTION="Compiled by wukongdaily"
 sed -i "s/DISTRIB_DESCRIPTION='[^']*'/DISTRIB_DESCRIPTION='$NEW_DESCRIPTION'/" "$FILE_PATH"
-# 脚本执行完成后重命名自己，防止重复执行
-mv /etc/uci-defaults/99-custom.sh /etc/uci-defaults/99-custom.sh.bak
+# 确保脚本有执行权限
+chmod +x /etc/uci-defaults/99-custom.sh
+
+# 脚本执行完毕后删除自己，防止重复执行
+rm -f /etc/uci-defaults/99-custom.sh
 
 exit 0
